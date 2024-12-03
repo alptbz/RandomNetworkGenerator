@@ -37,11 +37,12 @@ class Router:
             self.routing_table.append({
                 "type": "S",
                 "destination": destination,
-                "next_hop": next_hop
+                "next_hop": next_hop,
+                "interface": ""
             })
 
     def delete_entries_by_next_hop(self, next_hop):
-        self.routing_table = [entry for entry in self.routing_table if entry["next_hop"] != next_hop]
+        self.routing_table = [entry for entry in self.routing_table if entry["next_hop"] != next_hop or entry["type"] == "C"]
 
     def add_connection(self, other_router: typing.Self, network) -> RouterConnection:
         # Assign IPs for the /30 network
@@ -67,7 +68,8 @@ class Router:
         self.routing_table.append({
             "type": "C",
             "destination": f"{network.network_address}/{network.prefixlen}",
-            "next_hop": str(ip_other)
+            "next_hop": str(ip_other),
+            "interface": self_interface,
         })
 
         other_router.connections.append(connection)
@@ -80,7 +82,8 @@ class Router:
         other_router.routing_table.append({
             "type": "C",
             "destination": f"{network.network_address}/{network.prefixlen}",
-            "next_hop": str(ip_self)
+            "next_hop": str(ip_self),
+            "interface": other_interface,
         })
 
         return connection
@@ -88,12 +91,16 @@ class Router:
     def generate_config(self):
         lines = []
         lines.append(f"! Router {self.name}")
+        lines.append(f"interface Loopback 0/0")
+        lines.append(f"{self.router_ip}")
         for interface in self.interfaces:
             lines.append(f"! connected to {interface['comment']}")
             lines.append(f"interface {interface['interface']} ")
             lines.append(f"{interface['interface_ip']}/{interface['network'].prefixlen}")
-        lines.append(f"\n! Routing {self.name}")
-        for route in self.routing_table:
+        lines.append(f"\n! Routing table {self.name}")
+        for route in [r for r in self.routing_table if r["type"] == "C"]:
+            lines.append(f"{route['type']} {route['destination']} {route['interface']}")
+        for route in [r for r in self.routing_table if r["type"] == "S"]:
             lines.append(f"{route['type']} {route['destination']} {route['next_hop']}")
         return lines
 

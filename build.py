@@ -1,11 +1,12 @@
 import ipaddress
 
 import functions
+import globals
 import helpers
 
 
 if __name__ == "__main__":
-    num_routers = 12  # Define the number of routers
+    num_routers = globals.num_of_routers  # Define the number of routers
     base_network = ipaddress.IPv4Network("10.10.0.0/16")
     base_network_router_ips = ipaddress.IPv4Network("10.50.0.0/24")
     subnets = list(base_network.subnets(new_prefix=30))

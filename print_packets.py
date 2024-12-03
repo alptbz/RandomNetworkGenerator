@@ -2,6 +2,7 @@ import random
 import textwrap
 
 import fun_content
+import globals
 import helpers
 import posprinter
 from router import Router
@@ -33,8 +34,9 @@ def generate_random_packet(router_a, routers):
 
 if __name__ == "__main__":
     routers, connections = helpers.load_from_file()
-    router = next((r for r in routers if r.name == "R1"), None)
-    for i in range(0, 10):
-        random_packet = generate_random_packet(router, routers)
-        [print(line) for line in random_packet]
-        posprinter.print_pos(random_packet)
+    for router_name in globals.starting_routers:
+        router = next((r for r in routers if r.name == router_name), None)
+        for i in range(0, globals.num_of_packets_per_router):
+            random_packet = generate_random_packet(router, routers)
+            [print(line) for line in random_packet]
+            posprinter.print_pos(random_packet)
