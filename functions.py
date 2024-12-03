@@ -1,14 +1,13 @@
+from datetime import datetime
 from typing import List
 
-import pandas as pd  # Import Pandas for DataFrame creation
-from dijkstar.algorithm import PathInfo
-from jaal import Jaal
 import random
 import ipaddress
 import os
 import json
 from router import Router, RouterConnection
 from dijkstar import Graph, find_path
+import pickle
 
 
 def every_router_has_three_connections(routers: List[Router]) -> bool:
@@ -18,7 +17,7 @@ def every_router_has_three_connections(routers: List[Router]) -> bool:
     return True
 
 
-def generate_random_network(num_routers, subnets, router_ips):
+def generate_random_network(num_routers, subnets, router_ips, max_num_of_connections):
     routers = []
 
     router_ips.pop(0)
@@ -36,7 +35,7 @@ def generate_random_network(num_routers, subnets, router_ips):
         router_a = routers_to_connect.pop()
         router_b = routers_to_connect[-1]
         connections.append(router_a.add_connection(router_b, subnets.pop()))
-        # print(f"Connection from {router_a.name} to {router_b.name}")
+        print(f"Connection from {router_a.name} to {router_b.name}")
 
     while not every_router_has_three_connections(routers) and safety_counter < 100000:
         safety_counter += 1
@@ -44,34 +43,20 @@ def generate_random_network(num_routers, subnets, router_ips):
         routers_to_use = routers.copy()
         routers_to_use.remove(router_a)
         router_b:Router = random.choice(routers_to_use)
-        if len(router_a.connections) >= 3 or len(router_b.connections) >= 3:
+        if len(router_a.connections) >= max_num_of_connections or len(router_b.connections) >= max_num_of_connections:
             continue
         if next((e for e in connections if e.equals(router_a, router_b)), None) is None:
             connections.append(router_a.add_connection(router_b, subnets.pop()))
 
+    for i in range(0, int(len(routers)/2)):
+        router_a: Router = random.choice(routers)
+        routers_to_use = routers.copy()
+        routers_to_use.remove(router_a)
+        router_b: Router = random.choice(routers_to_use)
+        if next((e for e in connections if e.equals(router_a, router_b)), None) is None:
+            connections.append(router_a.add_connection(router_b, subnets.pop()))
+
     return routers, connections
-
-
-def visualize_network(routers, connections):
-    nodes = pd.DataFrame([{"id": router.num, "title": router.name} for router in routers])
-
-    # Avoid duplicate edges by sorting and filtering unique pairs
-
-    edges = pd.DataFrame([
-        {"from": connection.router_left.num, "to": connection.router_right.num, "label": str(connection.network)}
-        for connection in connections
-    ])
-
-    # Visualize with Jaal
-    Jaal(edges, nodes).plot()
-
-
-def save_to_json(data, output_folder="out"):
-    if not os.path.exists(output_folder):
-        os.makedirs(output_folder)
-
-    with open(os.path.join(output_folder, "network.json"), "w") as f:
-        json.dump(data, f, indent=4, default=lambda k: k.__dict__)
 
 
 def add_static_routes(routers: List[Router], connections, subnets):
@@ -110,6 +95,7 @@ def add_static_routes(routers: List[Router], connections, subnets):
 
     print("Added all static routes")
 
+
 def aggregate_by_next_hop(routing_table):
     aggregation = {}
     for entry in routing_table:
@@ -125,23 +111,3 @@ def aggregate_one_route_into_default(routers: List[Router]):
         max_key = max(next_hop_aggregates, key=lambda x: next_hop_aggregates[x])
         router.delete_entries_by_next_hop(max_key)
         router.add_static_route(ipaddress.IPv4Network("0.0.0.0/0"), max_key)
-
-
-if __name__ == "__main__":
-    num_routers = 12  # Define the number of routers
-    base_network = ipaddress.IPv4Network("10.10.0.0/16")
-    base_network_router_ips = ipaddress.IPv4Network("10.50.0.0/24")
-    subnets = list(base_network.subnets(new_prefix=30))
-    router_ips = list(base_network_router_ips.subnets(new_prefix=32))
-    routers, connections = generate_random_network(num_routers, subnets, router_ips)
-
-    add_static_routes(routers,connections,subnets)
-    aggregate_one_route_into_default(routers)
-
-    # Generate configurations
-    for router in routers:
-        print(router.generate_config())
-
-    # Visualize and save the network
-    visualize_network(routers, connections)
-

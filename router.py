@@ -18,6 +18,7 @@ class RouterConnection:
             return self.router_right
         return self.router_left
 
+
 class Router:
 
     def __init__(self, num, router_ip):
@@ -58,6 +59,7 @@ class Router:
 
         self.connections.append(connection)
         self.interfaces.append({
+            "comment" : other_router.name,
             "interface": self_interface,
             "network": network,
             "interface_ip": str(ip_self)
@@ -70,6 +72,7 @@ class Router:
 
         other_router.connections.append(connection)
         other_router.interfaces.append({
+            "comment": self.name,
             "interface": other_interface,
             "network": network,
             "interface_ip": str(ip_other)
@@ -83,14 +86,16 @@ class Router:
         return connection
 
     def generate_config(self):
-        config = f"! Router {self.name}\n"
+        lines = []
+        lines.append(f"! Router {self.name}")
         for interface in self.interfaces:
-            config += f"interface {interface['interface']} "
-            config += f"{interface['interface_ip']}/{interface['network'].prefixlen}\n"
-        config += f"\n! Routing {self.name}\n"
+            lines.append(f"! connected to {interface['comment']}")
+            lines.append(f"interface {interface['interface']} ")
+            lines.append(f"{interface['interface_ip']}/{interface['network'].prefixlen}")
+        lines.append(f"\n! Routing {self.name}")
         for route in self.routing_table:
-            config += f"{route['type']} {route['destination']} {route['next_hop']}\n"
-        return config
+            lines.append(f"{route['type']} {route['destination']} {route['next_hop']}")
+        return lines
 
     def get_matching_interface_address(self, router_from: typing.Self):
         for i_own in self.interfaces:
