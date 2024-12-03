@@ -10,6 +10,7 @@ import json
 from router import Router, RouterConnection
 from dijkstar import Graph, find_path
 
+
 def every_router_has_three_connections(routers: List[Router]) -> bool:
     for router in routers:
         if len(router.connections) < 3:
@@ -105,7 +106,7 @@ def add_static_routes(routers: List[Router], connections, subnets):
         next_hop_router: Router = next((r for r in routers if r.num == path.nodes[1]), None)
         matching_interface = router_from.get_matching_interface_address(next_hop_router)
         router_from.add_static_route(router_to.router_ip, matching_interface)
-        print(f"Added from {router_from} to {router_to} via {matching_interface} for {path}")
+        # print(f"Added from {router_from} to {router_to} via {matching_interface} for {path}")
 
     print("Added all static routes")
 
