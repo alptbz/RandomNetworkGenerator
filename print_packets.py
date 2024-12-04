@@ -1,5 +1,6 @@
 import random
 import textwrap
+from typing import List
 
 import fun_content
 import globals
@@ -18,8 +19,8 @@ def generate_random_packet(router_a, routers):
         "-",
         "Deliver without hesitation. Delay is treason.".upper(),
         "-",
-        f"SRC: {router_a.router_ip}",
-        f"DST: {random_router_b.router_ip}",
+        f"SRC: {router_a.router_ip.network_address}",
+        f"DST: {random_router_b.router_ip.network_address}",
         f"MSG",
         f'-',
     ]
@@ -36,7 +37,9 @@ if __name__ == "__main__":
     routers, connections = helpers.load_from_file()
     for router_name in globals.starting_routers:
         router = next((r for r in routers if r.name == router_name), None)
+        all_router_except_source: List[Router] = routers.copy()
+        all_router_except_source.remove(router)
         for i in range(0, globals.num_of_packets_per_router):
-            random_packet = generate_random_packet(router, routers)
+            random_packet = generate_random_packet(router, all_router_except_source)
             [print(line) for line in random_packet]
-            posprinter.print_pos(random_packet)
+            #posprinter.print_pos(random_packet)

@@ -18,7 +18,7 @@ def print_pos(print_lines: List[str], max=100):
             if type(print_line) == str:
                 if print_line == "-":
                     pos_printer.set(bold=True)
-                    pos_printer.text(("-" * 48) + "\n")
+                    pos_printer.text(("-" * LINE_LENGTH) + "\n")
                 elif print_line.startswith("{") or print_line.startswith("["):
                     pos_printer.set(bold=True, double_width=True, double_height=True)
                     pos_printer.text(print_line[1:] + "\n")
