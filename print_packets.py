@@ -42,4 +42,5 @@ if __name__ == "__main__":
         for i in range(0, globals.num_of_packets_per_router):
             random_packet = generate_random_packet(router, all_router_except_source)
             [print(line) for line in random_packet]
-            #posprinter.print_pos(random_packet)
+            if globals.do_print:
+                posprinter.print_pos(random_packet)

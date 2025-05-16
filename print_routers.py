@@ -2,6 +2,8 @@ import random
 from typing import List
 
 import textwrap
+
+import globals
 import helpers
 import posprinter
 
@@ -24,4 +26,5 @@ for router in routers:
     instruction_lines.append("-")
 
     [print(line) for line in instruction_lines]
-    posprinter.print_pos(instruction_lines)
+    if globals.do_print:
+        posprinter.print_pos(instruction_lines)
